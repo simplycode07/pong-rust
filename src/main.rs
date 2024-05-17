@@ -7,11 +7,11 @@ const SCREEN_WIDTH: u32 = 1200;
 const SCREEN_HEIGHT: u32 = 600;
 
 struct Player {
-    x: u32,
-    y: u32,
+    x: i32,
+    y: i32,
     width: u32,
     height: u32,
-    speed: u32,
+    speed: i32,
     direction: i8
 }
 
@@ -19,10 +19,10 @@ impl Player {
     fn update_pos(&mut self) {
         if self.direction > 0 {
             // Move down
-            if self.y + self.speed < SCREEN_HEIGHT - self.height {
+            if self.y + self.speed < (SCREEN_HEIGHT - self.height).try_into().unwrap(){
                 self.y += self.speed;
             } else {
-                self.y = SCREEN_HEIGHT - self.height;
+                self.y = (SCREEN_HEIGHT - self.height).try_into().unwrap();
                 self.direction = 0;
             }
         } else if self.direction == 0 {
@@ -62,7 +62,7 @@ fn main() -> Result<(), String> {
         player.update_pos();
 
         canvas.set_draw_color(Color::RGB(0, 0, 0));
-        canvas.fill_rect(Rect::new(player.x.try_into().unwrap(), player.y.try_into().unwrap(), player.width, player.height)).unwrap();
+        canvas.fill_rect(Rect::new(player.x, player.y, player.width, player.height)).unwrap();
 
         println!("current player_stats {} {} {}", player.x, player.y, player.direction);
         for event in event_pump.poll_iter() {
