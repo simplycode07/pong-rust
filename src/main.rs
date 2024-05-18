@@ -48,6 +48,8 @@ fn main() -> Result<(), String> {
         player.update_pos();
         pong.update_pos();
 
+        pong.check_collision(&player);
+
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.fill_rect(Rect::new(player.x, player.y, player.width, player.height)).unwrap();
         canvas.fill_rect(Rect::new(pong.x, pong.y, pong.radius, pong.radius)).unwrap();
@@ -97,7 +99,16 @@ impl PingPong {
             self.y = 0;
             self.direction[1] *= -1.0;
         }
+    }
 
+    fn check_collision(&mut self, player: &Player) -> bool {
+        if Rect::has_intersection(&Rect::new(self.x, self.y, self.radius, self.radius), Rect::new(player.x, player.y, player.width, player.height)) {
+            println!("collision detected");
+            self.direction[0] *= -1.0;
+            
+            self.direction[1] *= 1.3;
+        }
+        return false;
     }
 }
 
