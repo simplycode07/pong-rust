@@ -1,6 +1,6 @@
 extern crate sdl2;
 
-use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect};
+use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect, sys::KeyCode};
 use std::time::Duration;
 
 const SCREEN_WIDTH: u32 = 1200;
@@ -12,26 +12,25 @@ struct Player {
     width: u32,
     height: u32,
     speed: i32,
-    direction: i8
 }
 
 impl Player {
     fn update_pos(&mut self) {
-        if self.direction > 0 {
+        if self.speed > 0 {
             // Move down
             if self.y + self.speed < (SCREEN_HEIGHT - self.height).try_into().unwrap(){
                 self.y += self.speed;
             } else {
                 self.y = (SCREEN_HEIGHT - self.height).try_into().unwrap();
-                self.direction = 0;
+                self.speed = 0;
             }
-        } else if self.direction == 0 {
+        } else if self.speed <= 0 {
             // Move up
-            if self.y >= self.speed {
-                self.y -= self.speed;
+            if self.y + self.speed >= 0 {
+                self.y += self.speed;
             } else {
                 self.y = 0;
-                self.direction = 1;
+                self.speed = 0;
             }
         }
     }
@@ -53,7 +52,7 @@ fn main() -> Result<(), String> {
     canvas.present();
 
     let mut running = true;
-    let mut player = Player{x:20, y:0, width:10, height:50, speed:10, direction:1};
+    let mut player = Player{x:20, y:(SCREEN_HEIGHT/2).try_into().unwrap(), width:10, height:50, speed:0};
     let mut event_pump = sdl_context.event_pump().unwrap();
     while running {
         canvas.set_draw_color(Color::RGB(255, 255, 255));
@@ -64,14 +63,15 @@ fn main() -> Result<(), String> {
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.fill_rect(Rect::new(player.x, player.y, player.width, player.height)).unwrap();
 
-        println!("current player_stats {} {} {}", player.x, player.y, player.direction);
+        println!("current player_stats {} {} {}", player.x, player.y, player.speed);
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => running = false,
+                Event::Quit { .. } => running = false,
+                Event::KeyDown { keycode:Some(Keycode::W), .. } => player.speed = -10,
+                Event::KeyDown { keycode:Some(Keycode::S), .. } => player.speed = 10,
+
+                Event::KeyUp { keycode:Some(Keycode::W), .. } 
+                | Event::KeyUp { keycode:Some(Keycode::S), .. } => player.speed = 0,
                 _ => {}
             }
         }
