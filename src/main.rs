@@ -7,16 +7,16 @@ const SCREEN_WIDTH: u32 = 1200;
 const SCREEN_HEIGHT: u32 = 600;
 
 struct Player {
-    x: i32,
-    y: i32,
-    width: u32,
-    height: u32,
+    rect: Rect,
+    //x: i32,
+    //y: i32,
+    //width: u32,
+    //height: u32,
     speed: i32,
 }
 
 struct PingPong {
-    x: i32,
-    y: i32,
+    rect: Rect,
     radius: u32,
     direction: [f64; 2]
 }
@@ -37,8 +37,9 @@ fn main() -> Result<(), String> {
     canvas.present();
 
     let mut running = true;
-    let mut player = Player{x:20, y:(SCREEN_HEIGHT/2).try_into().unwrap(), width:10, height:50, speed:0};
-    let mut pong = PingPong{x:50, y:20, radius:20, direction:[2.0, 5.0]};
+    // let mut player = Player{x:20, y:(SCREEN_HEIGHT/2).try_into().unwrap(), width:10, height:50, speed:0};
+    let mut player = Player{rect:Rect::new(20, (SCREEN_HEIGHT/2).try_into().unwrap(), 10, 80), speed:0};
+    let mut pong = PingPong{rect:Rect::new(20, 80, 20, 20) ,radius:20, direction:[5.0, 2.0]};
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     while running {
@@ -51,10 +52,11 @@ fn main() -> Result<(), String> {
         pong.check_collision(&player);
 
         canvas.set_draw_color(Color::RGB(0, 0, 0));
-        canvas.fill_rect(Rect::new(player.x, player.y, player.width, player.height)).unwrap();
-        canvas.fill_rect(Rect::new(pong.x, pong.y, pong.radius, pong.radius)).unwrap();
 
-        println!("current player_stats {} {} {}", player.x, player.y, player.speed);
+        canvas.fill_rect(player.rect).unwrap();
+        canvas.fill_rect(pong.rect).unwrap();
+
+        println!("current pong_stats {} {} {} {}", pong.rect.x, pong.rect.y, pong.direction[0], pong.direction[1]);
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => running = false,
@@ -76,36 +78,35 @@ fn main() -> Result<(), String> {
 
 impl PingPong {
     fn update_pos(&mut self) {
-        self.x += (self.direction[0]) as i32;
-        self.y += (self.direction[1]) as i32;
+        self.rect.x += (self.direction[0]) as i32;
+        self.rect.y += (self.direction[1]) as i32;
 
         // make sure the ball doesn't exit the screen
-        if self.x < 0 {
-            self.x = 0;
+        if self.rect.x < 0 {
+            self.rect.x = 0;
             self.direction[0] *= -1.0;
         }
         
-        if self.x > (SCREEN_WIDTH - self.radius).try_into().unwrap() {
-            self.x = (SCREEN_WIDTH - self.radius).try_into().unwrap();
+        if self.rect.x > (SCREEN_WIDTH - self.radius).try_into().unwrap() {
+            self.rect.x = (SCREEN_WIDTH - self.radius).try_into().unwrap();
             self.direction[0] *= -1.0;
         }
 
-        if self.y > (SCREEN_HEIGHT - self.radius).try_into().unwrap() {
-            self.y = (SCREEN_HEIGHT - self.radius).try_into().unwrap();
+        if self.rect.y > (SCREEN_HEIGHT - self.radius).try_into().unwrap() {
+            self.rect.y = (SCREEN_HEIGHT - self.radius).try_into().unwrap();
             self.direction[1] *= -1.0;
         }
 
-        if self.y < 0{
-            self.y = 0;
+        if self.rect.y < 0{
+            self.rect.y = 0;
             self.direction[1] *= -1.0;
         }
     }
 
     fn check_collision(&mut self, player: &Player) -> bool {
-        if Rect::has_intersection(&Rect::new(self.x, self.y, self.radius, self.radius), Rect::new(player.x, player.y, player.width, player.height)) {
+        if Rect::has_intersection(&self.rect, player.rect) {
             println!("collision detected");
             self.direction[0] *= -1.0;
-            
             self.direction[1] *= 1.3;
         }
         return false;
@@ -116,18 +117,18 @@ impl Player {
     fn update_pos(&mut self) {
         if self.speed > 0 {
             // Move down
-            if self.y + self.speed < (SCREEN_HEIGHT - self.height).try_into().unwrap(){
-                self.y += self.speed;
+            if self.rect.y + self.speed < (SCREEN_HEIGHT - self.rect.height()).try_into().unwrap(){
+                self.rect.y += self.speed;
             } else {
-                self.y = (SCREEN_HEIGHT - self.height).try_into().unwrap();
+                self.rect.y = (SCREEN_HEIGHT - self.rect.height()).try_into().unwrap();
                 self.speed = 0;
             }
         } else if self.speed <= 0 {
             // Move up
-            if self.y + self.speed >= 0 {
-                self.y += self.speed;
+            if self.rect.y + self.speed >= 0 {
+                self.rect.y += self.speed;
             } else {
-                self.y = 0;
+                self.rect.y = 0;
                 self.speed = 0;
             }
         }
