@@ -2,6 +2,7 @@ extern crate sdl2;
 
 use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect};
 use std::time::Duration;
+use rand::Rng;
 
 const SCREEN_WIDTH: u32 = 1200;
 const SCREEN_HEIGHT: u32 = 600;
@@ -18,7 +19,10 @@ struct Player {
 struct PingPong {
     rect: Rect,
     radius: u32,
-    direction: [f64; 2]
+    speed: i32,
+    // 0 degrees is +x, 90 degrees is +y
+    // similarily 180 is -x, and 270 is -y
+    angle: i32
 }
 
 fn main() -> Result<(), String> {
@@ -39,29 +43,42 @@ fn main() -> Result<(), String> {
     let mut running = true;
     // let mut player = Player{x:20, y:(SCREEN_HEIGHT/2).try_into().unwrap(), width:10, height:50, speed:0};
     let mut player = Player{rect:Rect::new(20, (SCREEN_HEIGHT/2).try_into().unwrap(), 10, 80), speed:0};
-    let mut pong = PingPong{rect:Rect::new(20, 80, 20, 20) ,radius:20, direction:[5.0, 2.0]};
+    let mut computer = Player{rect:Rect::new((SCREEN_WIDTH - 20).try_into().unwrap(), (SCREEN_HEIGHT/2).try_into().unwrap(), 10, 80), speed:0};
+    let mut pong = PingPong{rect:Rect::new(200, 150, 20, 20), radius:20, speed:5, angle:120};
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     while running {
         canvas.set_draw_color(Color::RGB(255, 255, 255));
         canvas.clear();
 
-        player.update_pos();
+        if pong.rect.x > (SCREEN_WIDTH/2).try_into().unwrap() {
+            if computer.rect.y < pong.rect.y {
+                computer.speed = 5;
+            }
+            if computer.rect.y > pong.rect.y {
+                computer.speed = -5;
+            }
+        }
+
         pong.update_pos();
+        player.update_pos();
+        computer.update_pos();
 
         pong.check_collision(&player);
+        pong.check_collision(&computer);
 
         canvas.set_draw_color(Color::RGB(0, 0, 0));
 
         canvas.fill_rect(player.rect).unwrap();
+        canvas.fill_rect(computer.rect).unwrap();
         canvas.fill_rect(pong.rect).unwrap();
 
-        println!("current pong_stats {} {} {} {}", pong.rect.x, pong.rect.y, pong.direction[0], pong.direction[1]);
+        //println!("current pong_stats {} {} {} {}", pong.rect.x, pong.rect.y, pong.speed, pong.angle);
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => running = false,
-                Event::KeyDown { keycode:Some(Keycode::W), .. } => player.speed = -5,
-                Event::KeyDown { keycode:Some(Keycode::S), .. } => player.speed = 5,
+                Event::KeyDown { keycode:Some(Keycode::W), .. } => player.speed = -2,
+                Event::KeyDown { keycode:Some(Keycode::S), .. } => player.speed = 2,
 
                 Event::KeyUp { keycode:Some(Keycode::W), .. } 
                 | Event::KeyUp { keycode:Some(Keycode::S), .. } => player.speed = 0,
@@ -77,40 +94,60 @@ fn main() -> Result<(), String> {
 }
 
 impl PingPong {
+    // change it from 2 vectors to r𝜃
     fn update_pos(&mut self) {
-        self.rect.x += (self.direction[0]) as i32;
-        self.rect.y += (self.direction[1]) as i32;
+        //self.rect.x += (self.direction[0]) as i32;
+        //self.rect.y += (self.direction[1]) as i32;
 
+        self.rect.x += ((self.speed as f64) * (self.angle as f64).cos()) as i32;
+        self.rect.y += ((self.speed as f64) * (self.angle as f64).sin()) as i32;
+        
         // make sure the ball doesn't exit the screen
+        // top collision
         if self.rect.x < 0 {
             self.rect.x = 0;
-            self.direction[0] *= -1.0;
+            self.angle = 180 - self.angle;
+            println!("You Lose")
         }
         
+        // bottom collision
         if self.rect.x > (SCREEN_WIDTH - self.radius).try_into().unwrap() {
             self.rect.x = (SCREEN_WIDTH - self.radius).try_into().unwrap();
-            self.direction[0] *= -1.0;
+            self.angle = 180 - self.angle;
+            println!("You Win");
         }
 
         if self.rect.y > (SCREEN_HEIGHT - self.radius).try_into().unwrap() {
             self.rect.y = (SCREEN_HEIGHT - self.radius).try_into().unwrap();
-            self.direction[1] *= -1.0;
+            self.angle = 360 - self.angle;
         }
 
         if self.rect.y < 0{
             self.rect.y = 0;
-            self.direction[1] *= -1.0;
+            self.angle = 360 - self.angle;
         }
     }
 
     fn check_collision(&mut self, player: &Player) -> bool {
         if Rect::has_intersection(&self.rect, player.rect) {
-            println!("collision detected");
-            self.direction[0] *= -1.0;
-            self.direction[1] *= 1.3;
+            let mut rng = rand::thread_rng();
+
+            if self.angle > 0 && self.angle <= 90 {
+                self.angle = rng.gen_range(90..180);
+            } else if self.angle > 90 && self.angle <= 180 {
+                self.angle = rng.gen_range(0..90);
+            } else if self.angle > 180 && self.angle <= 270 {
+                self.angle = rng.gen_range(270..360);
+            } else if self.angle > 270 && self.angle <= 360 {
+                self.angle = rng.gen_range(180..270);
+            }
+
+            println!("{}", self.angle);
+
         }
         return false;
     }
+
 }
 
 impl Player {
