@@ -1,5 +1,6 @@
 extern crate sdl2;
 
+use std::f64::consts::PI;
 use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect};
 use std::time::Duration;
 use rand::Rng;
@@ -44,7 +45,7 @@ fn main() -> Result<(), String> {
     // let mut player = Player{x:20, y:(SCREEN_HEIGHT/2).try_into().unwrap(), width:10, height:50, speed:0};
     let mut player = Player{rect:Rect::new(20, (SCREEN_HEIGHT/2).try_into().unwrap(), 10, 80), speed:0};
     let mut computer = Player{rect:Rect::new((SCREEN_WIDTH - 20).try_into().unwrap(), (SCREEN_HEIGHT/2).try_into().unwrap(), 10, 80), speed:0};
-    let mut pong = PingPong{rect:Rect::new(200, 150, 20, 20), radius:20, speed:5, angle:120};
+    let mut pong = PingPong{rect:Rect::new(200, 150, 20, 20), radius:20, speed:5, angle:50};
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     while running {
@@ -60,7 +61,7 @@ fn main() -> Result<(), String> {
             }
         }
 
-        pong.update_pos();
+        running = pong.update_pos();
         player.update_pos();
         computer.update_pos();
 
@@ -95,26 +96,26 @@ fn main() -> Result<(), String> {
 
 impl PingPong {
     // change it from 2 vectors to r𝜃
-    fn update_pos(&mut self) {
+    fn update_pos(&mut self) -> bool {
         //self.rect.x += (self.direction[0]) as i32;
         //self.rect.y += (self.direction[1]) as i32;
 
-        self.rect.x += ((self.speed as f64) * (self.angle as f64).cos()) as i32;
-        self.rect.y += ((self.speed as f64) * (self.angle as f64).sin()) as i32;
+        self.rect.x += ((self.speed as f64) * ((self.angle + 90) as f64 * PI / 180.0).sin()) as i32;
+        self.rect.y += ((self.speed as f64) * ((self.angle + 90) as f64 * PI / 180.0).cos()) as i32;
         
         // make sure the ball doesn't exit the screen
         // top collision
         if self.rect.x < 0 {
             self.rect.x = 0;
-            self.angle = 180 - self.angle;
-            println!("You Lose")
+            println!("You Lose");
+            return false;
         }
         
         // bottom collision
         if self.rect.x > (SCREEN_WIDTH - self.radius).try_into().unwrap() {
             self.rect.x = (SCREEN_WIDTH - self.radius).try_into().unwrap();
-            self.angle = 180 - self.angle;
             println!("You Win");
+            return false;
         }
 
         if self.rect.y > (SCREEN_HEIGHT - self.radius).try_into().unwrap() {
@@ -126,6 +127,8 @@ impl PingPong {
             self.rect.y = 0;
             self.angle = 360 - self.angle;
         }
+
+        return true;
     }
 
     fn check_collision(&mut self, player: &Player) -> bool {
