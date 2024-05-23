@@ -1,7 +1,7 @@
 extern crate sdl2;
 
 use std::{f64::consts::PI, time::Duration, cmp::min};
-use sdl2::{event::Event, keyboard::Keycode, libc::HUGETLB_FLAG_ENCODE_1GB, pixels::Color, rect::Rect};
+use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect};
 use rand::Rng;
 
 const SCREEN_WIDTH: u32 = 1200;
