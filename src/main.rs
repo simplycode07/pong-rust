@@ -1,7 +1,7 @@
 extern crate sdl2;
 
 use std::{f64::consts::PI, time::Duration, cmp::min};
-use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect, video::Window, render::Canvas, Sdl};
+use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::Canvas, video::Window, Sdl};
 use rand::{rngs::ThreadRng, Rng};
 
 const SCREEN_WIDTH: u32 = 1200;
@@ -39,8 +39,34 @@ fn main() {
     canvas.clear();
     canvas.present();
 
-    game(&mut canvas, &sdl_context);
+    if menu(&mut canvas, &sdl_context) {
+        game(&mut canvas, &sdl_context);
+    }
 
+}
+
+fn menu(canvas: &mut Canvas<Window>, sdl_context: &Sdl) -> bool{
+    let mut running = true;
+    let mut event_pump = (*sdl_context).event_pump().unwrap();
+    println!("Press any key to start...");
+    while running {
+        (*canvas).set_draw_color(Color::RGB(255, 255, 255));
+        (*canvas).clear();
+
+        //println!("computer: {} {}", computer.rect.y, computer.speed);
+        for event in event_pump.poll_iter() {
+            match event {
+                Event::Quit { .. } => running = false,
+                Event::KeyDown { .. } => return true,
+
+                _ => {}
+            }
+        }
+
+        (*canvas).present();
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 120));
+    }
+    return false;
 }
 
 fn game(canvas: &mut Canvas<Window>, sdl_context: &Sdl) {
@@ -103,6 +129,7 @@ fn game(canvas: &mut Canvas<Window>, sdl_context: &Sdl) {
         (*canvas).present();
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 120));
     }
+    return;
 }
 
 impl PingPong {
