@@ -1,7 +1,7 @@
 extern crate sdl2;
 
 use std::{f64::consts::PI, time::Duration, cmp::min};
-use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect};
+use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect, video::Window, render::Canvas, Sdl};
 use rand::{rngs::ThreadRng, Rng};
 
 const SCREEN_WIDTH: u32 = 1200;
@@ -25,7 +25,6 @@ struct PingPong {
 }
 
 fn main() {
-
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
@@ -33,12 +32,18 @@ fn main() {
         .build()
         .unwrap();
 
+
     let mut canvas = window.into_canvas().build().unwrap();
 
     canvas.set_draw_color(Color::RGB(255, 255, 255));
     canvas.clear();
     canvas.present();
 
+    game(&mut canvas, &sdl_context);
+
+}
+
+fn game(canvas: &mut Canvas<Window>, sdl_context: &Sdl) {
     let mut running = true;
     let mut collided_player = false;
     let mut collided_computer = false;
@@ -49,10 +54,10 @@ fn main() {
 
     let mut pong = PingPong{rect:Rect::new(200, 150, 20, 20), round_x:0.0, round_y:0.0, radius:20, speed:5, angle:320, color:Color::RGB(255, 0, 0)};
 
-    let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut event_pump = (*sdl_context).event_pump().unwrap();
     while running {
-        canvas.set_draw_color(Color::RGB(255, 255, 255));
-        canvas.clear();
+        (*canvas).set_draw_color(Color::RGB(255, 255, 255));
+        (*canvas).clear();
 
         if (pong.angle >= 0 && pong.angle < 90) || (pong.angle >= 270 && pong.angle < 360) {
             let half_height = (computer.rect.height()/2) as i32;
@@ -73,14 +78,14 @@ fn main() {
         collided_player = pong.check_collision(&player, &mut rng, collided_player);
         collided_computer = pong.check_collision(&computer, &mut rng, collided_computer);
 
-        canvas.set_draw_color(player.color);
-        canvas.fill_rect(player.rect).unwrap();
+        (*canvas).set_draw_color(player.color);
+        (*canvas).fill_rect(player.rect).unwrap();
 
-        canvas.set_draw_color(computer.color);
-        canvas.fill_rect(computer.rect).unwrap();
+        (*canvas).set_draw_color(computer.color);
+        (*canvas).fill_rect(computer.rect).unwrap();
 
-        canvas.set_draw_color(pong.color);
-        canvas.fill_rect(pong.rect).unwrap();
+        (*canvas).set_draw_color(pong.color);
+        (*canvas).fill_rect(pong.rect).unwrap();
 
         //println!("computer: {} {}", computer.rect.y, computer.speed);
         for event in event_pump.poll_iter() {
@@ -95,7 +100,7 @@ fn main() {
             }
         }
 
-        canvas.present();
+        (*canvas).present();
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 120));
     }
 }
