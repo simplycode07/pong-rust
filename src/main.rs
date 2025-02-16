@@ -101,8 +101,13 @@ fn game(canvas: &mut Canvas<Window>, sdl_context: &Sdl) {
         player.update_pos();
         computer.update_pos();
 
-        collided_player = pong.check_collision(&player, &mut rng, collided_player);
-        collided_computer = pong.check_collision(&computer, &mut rng, collided_computer);
+
+
+        if (pong.angle >= 0 && pong.angle < 90) || (pong.angle >= 270 && pong.angle < 360) {
+            collided_computer = pong.check_collision(&computer, &mut rng, collided_computer);
+        } else {
+            collided_player = pong.check_collision(&player, &mut rng, collided_player);
+        }
 
         (*canvas).set_draw_color(player.color);
         (*canvas).fill_rect(player.rect).unwrap();
@@ -179,15 +184,21 @@ impl PingPong {
 
     fn check_collision(&mut self, player: &Player, rng: &mut ThreadRng, prev_state: bool) -> bool {
         if Rect::has_intersection(&self.rect, player.rect) && !prev_state{
+            let change_x = (self.speed as f64) * ((self.angle) as f64 * PI / 180.0).cos() + self.round_x;
+            self.rect.x -= change_x as i32;
 
             if self.angle >= 0 && self.angle < 180 {
+                //println!("going +x");
                 self.angle = 180 - self.angle;
             } else if self.angle >= 180 && self.angle <= 360 {
+                //println!("going -x");
                 self.angle = 540 - self.angle;
             }
 
+
             self.angle += rng.gen_range(-10..10);
-            println!("random angle: {}", self.angle);
+            //println!("random angle: {}", self.angle);
+
             if self.angle < 0 { self.angle = 0 }
             self.angle %= 360;
             self.round_x = 0_f64;
